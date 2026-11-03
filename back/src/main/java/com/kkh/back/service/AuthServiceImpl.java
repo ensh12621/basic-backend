@@ -16,6 +16,7 @@ import com.kkh.back.dto.LoginDTO;
 import com.kkh.back.entity.MemberEntity;
 import com.kkh.back.repository.MemberRepository;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -96,6 +97,36 @@ public class AuthServiceImpl implements AuthService{
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();	
+	}
+
+	@Override
+	public String refreshToken(String refreshToken) {
+		
+		String userId = getSubjectFromJwt(refreshToken);
+		
+		String newAccessToken = createJwtToken(userId, ACCESS_TOKEN_VALIDITY);
+		logger.info("새로 발급받은 액세스토큰 => "+ newAccessToken);
+		
+		return newAccessToken;
+	}
+
+	private String getSubjectFromJwt(String refreshToken) {
+		try {
+            // 토큰을 파싱하여 Claims(페이로드) 객체 추출
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key) // 토큰 생성 시 사용한 key와 동일해야 함
+                    .build()
+                    .parseClaimsJws(refreshToken)
+                    .getBody();
+
+            // Subject에 담겨 있던 유저 아이디(userId) 반환
+            return claims.getSubject();
+            
+        } catch (Exception e) {
+            // 토큰이 만료되었거나 위조된 경우 예외 발생
+            logger.error("JWT 토큰 파싱 중 오류 발생: {}", e.getMessage());
+            return null;
+        }
 	}
 	
 

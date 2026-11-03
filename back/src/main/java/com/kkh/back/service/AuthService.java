@@ -18,4 +18,6 @@ public interface AuthService {
 
 	Map<String, Object> login(LoginDTO dto);
 
+	String refreshToken(String refreshToken);
+
 }

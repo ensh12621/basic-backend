@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kkh.back.dto.JoinDTO;
 import com.kkh.back.dto.LoginDTO;
+import com.kkh.back.dto.RefreshDTO;
 import com.kkh.back.service.AuthService;
 
 import jakarta.servlet.http.Cookie;
@@ -83,5 +84,27 @@ public class AuthController {
 		
 		return ResponseEntity.ok(resultMap);
 		
+	}
+	
+	@PostMapping("/refresh-token")
+	public ResponseEntity<?> refreshToken(@RequestBody @Valid RefreshDTO dto, HttpServletResponse response){
+		String accessToken = authService.refreshToken(dto.getRefreshToken());
+		Map<String, Object> resultMap = new HashMap<>();
+		if(accessToken == null) {
+			resultMap.put("result", "faled");
+		}else {
+			resultMap.put("result", "success");
+			
+			Cookie accessCookie = new Cookie("accessToken", accessToken);
+			accessCookie.setHttpOnly(true);
+			accessCookie.setSecure(false);
+			accessCookie.setPath("/");
+			accessCookie.setMaxAge(60);
+			
+			response.addCookie(accessCookie);
+		}
+		
+		
+		return ResponseEntity.ok(resultMap);
 	}
 }
