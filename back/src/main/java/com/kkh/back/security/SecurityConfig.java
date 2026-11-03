@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -16,6 +17,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity // 스프링 시큐리티 활성화
 public class SecurityConfig {
+	
+	private final String SECRET_KEY = "your-very-secure-and-long-secret-key-that-is-at-least-256-bits"; // AuthServiceImpl과 동일한 키 사용
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -25,6 +28,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfiguraitonSource()))
             // 2. HTTP 요청에 대한 권한 설정 (인증/인가)
             .authorizeHttpRequests(auth -> auth
+            	.requestMatchers("/student/**").authenticated()
                 .anyRequest().permitAll()
             )
 
@@ -36,7 +40,9 @@ public class SecurityConfig {
                 .logoutUrl("/api/logout")
                 .logoutSuccessUrl("/")
                 .invalidateHttpSession(true) // 세션 초기화
-            );
+            )
+            
+            .addFilterBefore(new JwtAuthenticationFilter(SECRET_KEY), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
